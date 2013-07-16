@@ -1,0 +1,51 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+# Add inputs and outputs from these tool invocations to the build variables 
+C_SRCS += \
+../commons/bitarray.c \
+../commons/config.c \
+../commons/error.c \
+../commons/listSTS.c \
+../commons/log.c \
+../commons/pcb.c \
+../commons/serialization.c \
+../commons/sockets.c \
+../commons/string.c \
+../commons/temporal.c 
+
+OBJS += \
+./commons/bitarray.o \
+./commons/config.o \
+./commons/error.o \
+./commons/listSTS.o \
+./commons/log.o \
+./commons/pcb.o \
+./commons/serialization.o \
+./commons/sockets.o \
+./commons/string.o \
+./commons/temporal.o 
+
+C_DEPS += \
+./commons/bitarray.d \
+./commons/config.d \
+./commons/error.d \
+./commons/listSTS.d \
+./commons/log.d \
+./commons/pcb.d \
+./commons/serialization.d \
+./commons/sockets.d \
+./commons/string.d \
+./commons/temporal.d 
+
+
+# Each subdirectory must supply rules for building sources it contributes
+commons/%.o: ../commons/%.c
+	@echo 'Building file: $<'
+	@echo 'Invoking: GCC C Compiler'
+	gcc -O0 -g3 -Wall -c -fmessage-length=0 -fPIC -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+

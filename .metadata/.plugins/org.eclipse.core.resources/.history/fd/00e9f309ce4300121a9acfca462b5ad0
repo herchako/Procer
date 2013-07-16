@@ -1,0 +1,18 @@
+#define  _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <commons/pcb.h>
+
+void main (void){
+	char* codigo;
+	t_file_package *paq;
+	t_pcb *pcb=malloc(t_pcb);
+	load_file_to_memory("home/utnso/test2.ansisop",&codigo);
+	paq = create_package_file(12,12,codigo);
+	free(codigo);
+	cargar_pcb(paq,pcb);
+
+
+
+
+}

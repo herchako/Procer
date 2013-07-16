@@ -1,0 +1,11 @@
+
+**** Build of configuration Debug for project pi ****
+
+make all 
+Building target: pi
+Invoking: GCC C Linker
+gcc -L"/home/utnso/2012-2c-medrano-y-labashe/procer/commons/Debug" -o "pi"  ./src/pi.o   -lcommons
+Finished building target: pi
+ 
+
+**** Build Finished ****

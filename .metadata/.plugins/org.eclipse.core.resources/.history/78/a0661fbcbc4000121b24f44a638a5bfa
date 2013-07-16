@@ -1,0 +1,103 @@
+/*
+ ============================================================================
+ Name        : pruebas.c
+ Author      : 
+ Version     :
+ Copyright   : Your copyright notice
+ Description : Hello World in C, Ansi-style
+ ============================================================================
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <errno.h>
+#include <string.h>
+#include <netdb.h>
+
+typedef struct {
+    int8_t packageType;
+    int32_t length;
+    char *data;
+}  t_stream;
+
+typedef struct{
+	uint32_t file_desc;
+	int16_t priority;
+	char *code;
+}  t_file_package;
+
+
+t_stream * deserealizar_stream (char * buffer){
+	t_stream *stream = malloc(sizeof(t_stream));
+	int offset=0,i=0,tmp_size=0;
+	stream->packageType = atoi(&buffer[0]);
+	stream->length = atoi(&buffer[2]);
+	for(i=0; buffer[i] != '#'; i++);
+	i++;
+	while(buffer[i] != '#') {
+		i++;
+	}
+	i++;
+	offset+=i;
+	for(tmp_size = 1; (buffer + offset)[tmp_size - 1] != '\0'; tmp_size++);
+	stream->data = malloc(tmp_size);
+	sprintf(stream->data, "%s", buffer + offset);
+	return stream;
+}
+
+
+char *serializar_arch(t_file_package *paq) {
+
+	char *payLoad = malloc(numDigits(paq->file_desc)+numDigits(paq->priority)+strlen(paq->code)+1+2);
+	sprintf(payLoad, "%d#%d#%s", (uint32_t)paq->file_desc,(int16_t)paq->priority, paq->code);
+	char *pack = malloc(numDigits(1) + numDigits((int64_t)strlen(payLoad)) + strlen(payLoad)+1+2);
+
+	sprintf(pack, "%d#%d#%s",1, strlen(payLoad), payLoad);
+	free(payLoad);
+	return pack;
+}
+
+t_file_package * package_file_deserializer(t_stream *stream)
+{
+
+	t_file_package *arch = malloc(sizeof(t_file_package));
+	int offset=0,i=0,tmp_size=0;
+
+	arch->file_desc = atoi(&stream->data[0]);
+	arch->priority = atoi(&stream->data[2]);
+	for(i=0; stream->data[i] != '#'; i++);
+	i++;
+	while(stream->data[i] != '#') {
+		i++;
+	}
+	i++;
+	offset+=i;
+	for(i=offset,tmp_size=0; stream->data[i] != '#'; i++,tmp_size++);
+	arch->code = malloc(tmp_size);
+	sprintf(arch->code, "%s",(char *)(sub_string(stream->data,offset,tmp_size)));
+
+
+	return arch;
+
+}
+
+t_file_package * create_package_file ( uint32_t file_desc,int16_t priority,char *code)
+{
+    t_file_package *paq = malloc(sizeof(t_file_package));
+    paq->priority = priority;
+    paq->file_desc = file_desc;
+    paq->code = malloc(strlen(code)+1);
+    strcpy(paq->code,code);
+    return paq;
+}
+
+int main(void) {
+	t_file_package *arch = create_package_file(2,3,"un lindo y apuesto \n codigo que estaria bueno que funcione");
+	char * archBuf = serializar_arch(arch);
+	t_stream * stream = deserealizar_stream(archBuf);
+	t_file_package *arch2 = package_file_deserializer(stream);
+	puts(arch2->code);
+	return EXIT_SUCCESS;
+}

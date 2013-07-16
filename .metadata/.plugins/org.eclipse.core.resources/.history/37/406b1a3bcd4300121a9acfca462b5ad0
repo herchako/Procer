@@ -1,0 +1,18 @@
+#define  _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char **argv) {
+    char *tmp = 0;
+
+    if (asprintf(&tmp, "%s %d", "Magic Number", 1234) < 0) {
+        perror("asprintf");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("%s\n", tmp);
+
+    free(tmp);
+
+    return 0;
+}

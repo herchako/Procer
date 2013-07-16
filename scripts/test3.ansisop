@@ -1,0 +1,35 @@
+#!/home/utnso/2012-2c-medrano-y-labashe/Procer/pi/Debug/pi
+
+variables x,y,z
+
+comienzo_programa
+x=0
+y=1
+z=0
+
+hasta_entrar:
+z=z+y;1
+imprimir z
+x=io(10,0)
+ssc x hasta_entrar
+
+anidada()
+imprimir y
+
+fin_programa
+
+comienzo_funcion anidada
+y=y+1;5
+anidada2()
+fin_funcion anidada
+
+
+comienzo_funcion anidada2
+y=y+2;5
+anidada3()
+fin_funcion anidada2
+
+
+comienzo_funcion anidada3
+y=y+3;50
+fin_funcion anidada3

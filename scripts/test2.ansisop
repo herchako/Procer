@@ -1,0 +1,32 @@
+#!/home/utnso/2012-2c-medrano-y-labashe/Procer/pi/Debug/pi
+
+variables x,b
+
+comienzo_programa
+
+x=0
+b=io(20,1)
+
+hasta_cinco:
+sumar()
+b=x-5
+snc b hasta_cinco
+
+hasta_cero:
+restar()
+snc x hasta_cero
+
+b=io(20,1)
+ssc x hasta_cinco
+
+fin_programa
+
+comienzo_funcion sumar
+x=x+1
+imprimir x
+fin_funcion sumar
+
+comienzo_funcion restar
+x=x-1
+imprimir x
+fin_funcion restar

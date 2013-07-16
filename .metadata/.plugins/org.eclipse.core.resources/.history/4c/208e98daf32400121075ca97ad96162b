@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) 2012 Sistemas Operativos - UTN FRBA. All rights reserved.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#ifndef PCB_H_
+#define PCB_H_
+
+
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <commons/collections/list.h>
+
+typedef struct {
+	int32_t nro_linea;
+	char * linea;
+} t_seg_codigo;
+
+typedef struct {
+	char *variable;
+	int32_t valor;
+} t_seg_datos;
+
+typedef struct {
+	int32_t linea;
+	char *nomb_fun;
+} t_pos_fun;
+
+typedef struct {
+	int32_t linea;
+	char *nomb_etq;
+} t_pos_etq;
+
+
+	static t_seg_codigo *line_code_create(int32_t , char );
+	static void line_code_destroy(t_seg_codigo);
+	static t_seg_datos *crear_nodo_datos(int32_t , char );
+	static void destruir_nodo_datos(t_seg_datos);
+	static t_pos_fun *crear_nodo_funcion(int32_t , char );
+	static void destruir_nodo_funcion(t_pos_fun );
+	static t_pos_etq *crear_nodo_etiqueta(int32_t , char );
+	static void destruir_nodo_etiqueta(t_pos_etq );
+	char* sub_string(const char* , size_t , size_t );
+	int load_file_to_memory(const char *, char **);
+
+#endif /* PCB_H_ */

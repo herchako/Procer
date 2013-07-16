@@ -1,0 +1,260 @@
+/*
+ * parser.c
+ *
+ *  Created on: 01/11/2012
+ *      Author: Ignacio/Hernán
+ */
+
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <commons/collections/list.h>
+
+typedef struct {
+	int32_t nro_linea;
+	char * linea;
+} t_seg_codigo;
+
+typedef struct {
+	char *variable;
+	int32_t valor;
+} t_seg_datos;
+
+typedef struct {
+	int32_t linea;
+	char *nomb_fun;
+} t_pos_fun;
+
+typedef struct {
+	int32_t linea;
+	char *nomb_etq;
+} t_pos_etq;
+
+static t_seg_codigo *line_code_create(int32_t nro_linea, char *linea) {
+	t_seg_codigo *new = malloc(sizeof(t_seg_codigo));
+	new->linea = strdup(linea);
+	new->nro_linea = nro_linea;
+	return new;
+}
+
+static void line_code_destroy(t_seg_codigo *self) {
+	free(self->linea);
+	free(self);
+}
+
+static t_seg_datos *crear_nodo_datos(int32_t valor, char *variable) {
+	t_seg_datos *new = malloc(sizeof(t_seg_datos));
+	new->variable = strdup(variable);
+	new->valor = valor;
+	return new;
+}
+
+static void destruir_nodo_datos(t_seg_datos *self) {
+	free(self->variable);
+	free(self);
+}
+
+static t_pos_fun *crear_nodo_funcion(int32_t linea, char *funcion) {
+	t_pos_fun *new = malloc(sizeof(t_pos_fun));
+	new->nomb_fun= strdup(funcion);
+	new->linea = linea;
+	return new;
+}
+
+static void destruir_nodo_funcion(t_pos_fun *self) {
+	free(self->nomb_fun);
+	free(self);
+}
+
+static t_pos_etq *crear_nodo_etiqueta(int32_t linea, char *etiqueta) {
+	t_pos_etq *new = malloc(sizeof(t_pos_etq));
+	new->nomb_etq= strdup(etiqueta);
+	new->linea = linea;
+	return new;
+}
+
+static void destruir_nodo_etiqueta(t_pos_etq *self) {
+	free(self->nomb_etq);
+	free(self);
+}
+
+char* sub_string(const char* str, size_t begin, size_t len) {
+	if (str == 0 || strlen(str) == 0 || strlen(str) < begin
+			|| strlen(str) < (begin + len))
+		return 0;
+
+	return strndup(str + begin, len);
+}
+
+int load_file_to_memory(const char *filename, char **result) {
+	int32_t tam_arch = 0;
+	FILE *f = fopen(filename, "r");
+	if (f == NULL) {
+		*result = NULL;
+		return EXIT_FAILURE; //error apertura
+	}
+	fseek(f, 0, SEEK_END);
+	tam_arch = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	*result = (char *) malloc(tam_arch + 1);
+	if (tam_arch != fread(*result, sizeof(char), tam_arch, f)) {
+		free(*result);
+		return EXIT_FAILURE; //error lectura
+	}
+	fclose(f);
+	(*result)[tam_arch] = 0;
+	return tam_arch;
+}
+
+int main(void) {
+	char *content;
+	int32_t tam_arch;
+	int32_t pos_arch_act = 0; //posicion absoluta en archivo
+	int32_t pos_car_act = 0; //posicion en la linea
+	int32_t nro_linea = 0;
+	t_list *l_seg_codigo, *l_seg_datos, *l_funciones, *l_etiquetas; //puntero tipo lista que apunta al segmento de codigo
+	l_seg_codigo = list_create();
+	l_seg_datos = list_create();
+	l_funciones = list_create();
+	l_etiquetas= list_create();
+
+	char * buffer_lect = malloc(1);
+	tam_arch = load_file_to_memory("archivo", &content); // aca se sube a memoria, es imporante entender que content ahora, es un "vector" de una sola dimencion que tiene todas las lineas separadas por '\n'
+
+	if (tam_arch < 0) {
+		puts("Error loading file");
+		return 1;
+	}
+
+	while (pos_arch_act < tam_arch) //lo que se hace a continuacion es hasta que finalice el archivo
+	{
+		pos_car_act = 0; //el que me dice en que parte del renglon estoy
+		while (content[pos_arch_act + pos_car_act] != '\n') {
+			pos_car_act++;
+		}
+
+		pos_car_act++;
+		buffer_lect = sub_string(content, pos_arch_act, pos_car_act); //esta funcion obtiene el substrin desde el principio de la linea hasta todos los caracteres que lei en la linea, es decir hasta el final
+		pos_arch_act += pos_car_act; // el que me dice en que parte del archivo estoy
+		nro_linea++;
+		list_add(l_seg_codigo, line_code_create(nro_linea, buffer_lect)); //agrega a la cola
+
+	}
+
+	printf("Segmento de código:\n");
+	//prueba de la estructura que creé recorriendo la lista con
+	int32_t i = 0;
+	t_seg_codigo *aux;
+	while (i < nro_linea) {
+		aux = list_get(l_seg_codigo, i);
+		puts(aux->linea);
+		i++;
+	}
+
+	char*cadena;
+	cadena = (char*) malloc(100);
+	int32_t declaracionVariables = 1, declaracionFuncion=1;
+	int32_t ultimoCaracter;
+	int32_t j;
+
+	for (i = 0; i < nro_linea; i++) {
+		aux = list_get(l_seg_codigo, i);
+		for (pos_car_act = 0; pos_car_act <= ((strlen(aux->linea)));
+				pos_car_act++) {
+			//printf("carácter: %c\n", *((aux->linea)+pos_car_act));
+			switch (*((aux->linea) + pos_car_act)) {
+			case ' ':
+				cadena = (char*) realloc((void*) cadena, pos_car_act);
+				strncpy(cadena, (aux->linea), pos_car_act);
+				if ((strcmp(cadena, "variables")) == 0) {
+					declaracionVariables = 0;
+					ultimoCaracter = pos_car_act;
+					for (j = 0; j <= pos_car_act; j++)
+						cadena[j] = '\0';
+				}
+				if ((strcmp(cadena, "comienzo_funcion")) == 0) {
+					declaracionFuncion = 0;
+					ultimoCaracter = pos_car_act;
+					for (j = 0; j <= pos_car_act; j++)
+						cadena[j] = '\0';
+				}
+				break;
+			case ',':
+				cadena = (char*) realloc((void*) cadena, pos_car_act - ultimoCaracter - 1);
+				strncpy(cadena, ((aux->linea) + ultimoCaracter + 1), pos_car_act - ultimoCaracter - 1);
+				list_add(l_seg_datos, crear_nodo_datos(0, cadena));
+				for (j = 0; j <= pos_car_act - ultimoCaracter - 1; j++)
+					cadena[j] = '\0';
+				ultimoCaracter = pos_car_act;
+				break;
+			case ':':
+				cadena = (char*) realloc((void*) cadena, pos_car_act);
+				strncpy(cadena, (aux->linea), pos_car_act);
+				cadena= strtok(cadena, ";");
+				list_add(l_etiquetas, crear_nodo_etiqueta(i, cadena));
+				for (j = 0; j <= pos_car_act; j++)
+					cadena[j] = '\0';
+				break;
+			case '\n':
+				if (declaracionVariables == 0) // me encuentro en una declaración de variables
+				{
+					cadena = (char*) realloc((void*) cadena, pos_car_act - ultimoCaracter - 1);
+					strncpy(cadena, (aux->linea) + ultimoCaracter + 1,pos_car_act - ultimoCaracter - 1);
+					cadena= strtok(cadena, ";");
+					list_add(l_seg_datos, crear_nodo_datos(0, cadena));
+					for (j = 0; j <= pos_car_act - ultimoCaracter - 1; j++)
+						cadena[j] = '\0';
+					declaracionVariables = 1;
+				} else
+					if (declaracionFuncion == 0)
+					{
+						cadena = (char*) realloc((void*) cadena, pos_car_act - ultimoCaracter - 1);
+						strncpy(cadena, (aux->linea) + ultimoCaracter + 1,pos_car_act - ultimoCaracter - 1);
+						cadena= strtok(cadena, ";");
+						list_add(l_funciones, crear_nodo_funcion(i, cadena));
+						for (j = 0; j <= pos_car_act - ultimoCaracter - 1; j++)
+							cadena[j] = '\0';
+						declaracionFuncion=1;
+					}
+				break;
+			}
+		}
+	}
+
+	printf("Segmento de datos:\n");
+	t_seg_datos *aux2;
+	i = 0;
+	while (i < l_seg_datos->elements_count) {
+		aux2 = list_get(l_seg_datos, i);
+		printf("%s vale: %d\n", aux2->variable, aux2->valor);
+		i++;
+	}
+
+	printf("Definiciones de funciones:\n");
+	t_pos_fun *aux3;
+	i = 0;
+	while (i < l_funciones->elements_count) {
+		aux3 = list_get(l_funciones, i);
+		printf("Se declara %s en la línea %d\n", aux3->nomb_fun, aux3->linea);
+		i++;
+	}
+
+	printf("Etiquetas:\n");
+	t_pos_etq *aux4;
+	i = 0;
+	while (i < l_etiquetas->elements_count) {
+		aux4 = list_get(l_etiquetas, i);
+		printf("Etiqueta %s en la línea %d\n", aux4->nomb_etq, aux4->linea);
+		i++;
+	}
+
+	list_destroy_and_destroy_elements(l_seg_codigo, (void*) line_code_destroy);
+	list_destroy_and_destroy_elements(l_seg_datos, (void*) destruir_nodo_datos);
+	list_destroy_and_destroy_elements(l_funciones, (void*) destruir_nodo_funcion);
+	list_destroy_and_destroy_elements(l_etiquetas, (void*) destruir_nodo_etiqueta);
+	free(content);
+	free(buffer_lect);
+	free(cadena);
+
+	return EXIT_SUCCESS;
+}

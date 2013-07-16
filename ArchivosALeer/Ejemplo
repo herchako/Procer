@@ -1,0 +1,30 @@
+#!/home/utnso/git/2012-2c-medrano-y-labashe/procer/piPrueba/Debug/piPrueba
+
+# Comentario
+
+variables a,b,c,d,e
+
+comienzo_programa
+	a=1
+	b=2;3
+	c=a+b
+	d=c-3
+	f1()
+	f2()
+	e=a+c;2
+fin_programa
+
+comienzo_function f1
+	a=3
+	f3()
+	b=4
+fin_function f1
+
+comienzo_function f2
+	a=a+1
+fin_function f2
+
+comienzo_function f3
+	io();2
+	c=d
+fin_function f3

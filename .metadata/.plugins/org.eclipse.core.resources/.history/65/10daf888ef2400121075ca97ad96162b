@@ -1,0 +1,39 @@
+/*
+ ============================================================================
+ Name        : pi.c
+ Author      : 
+ Version     :
+ Copyright   : Your copyright notice
+ Description : Hello World in C, Ansi-style
+ ============================================================================
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <commons/temporal.h>
+#include <commons/config.h>
+#include <commons/log.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+int main(void) {
+	char * tiempo = temporal_get_string_time();
+	puts(tiempo);
+	puts("!!!Hello World!!!"); /* prints !!!Hello World!!! */
+	free(tiempo);
+	t_config *arch_config = config_create("/home/utnso/Desarrollo/Workspace/2012-2c-medrano-y-labashe/procer/procerConfigs/pi.cfg");
+	const char *IPHost = config_get_string_value(arch_config, "pp.host");
+	uint32_t puertoHost = config_get_int_value(arch_config, "pp.puerto");
+	printf("Ip Host: %s", IPHost);
+	printf("Puerto Host: %d", puertoHost);
+	char path_log[100];
+	sprintf(path_log, "/home/utnso/Desarrollo/PI.%d.log", (int)getpid());
+	fopen(path_log, "a");
+	t_log *log_informacion = log_create(path_log, "PI_MedranoYLaBashe",false, LOG_LEVEL_INFO);
+	char msj[100];
+	sprintf(msj, "Conexiones con el servidor %s:%d establecida\nSe esperan solicitudes...",IPHost,puertoHost);
+	log_info(log_informacion, msj);
+	config_destroy(arch_config);
+	return EXIT_SUCCESS;
+}

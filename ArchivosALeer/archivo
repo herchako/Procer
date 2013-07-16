@@ -1,0 +1,23 @@
+#!/home/utnso/git/2012-2c-medrano-y-labashe/procer/piPrueba/Debug/piPrueba
+variables a,b,c
+comienzo_programa
+a=30
+imprimir a
+f1()
+a=1
+inicio_for:
+a=a+1
+b=a-5
+snc b inicio_for
+# E/S bloqueante:
+io(2,1)
+imprimir a
+fin_programa
+comienzo_funcion f1
+a=5;7
+a=c+1;2
+fin_funcion
+comienzo_funcion f2
+blabla
+bleble
+fin_funcion

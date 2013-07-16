@@ -1,0 +1,251 @@
+/*
+ ** client.c -- a stream socket client demo
+ */
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <errno.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/types.h>
+
+#include <commons/log.h>
+#include <commons/serialization.h>
+#include <commons/sockets.h>
+#include <commons/pcb.h>
+#include <arpa/inet.h>
+#include <ctype.h>
+
+typedef struct {
+	char *pp_ip;
+	uint32_t pp_port;
+	int8_t prioridad;
+} t_env_var;
+
+char* sub_string(const char* str, size_t begin, size_t len) {
+	if (str == 0 || strlen(str) == 0 || strlen(str) < begin
+			|| strlen(str) < (begin + len))
+		return 0;
+
+	return strndup(str + begin, len);
+}
+
+int numDigits(int64_t numero) {
+	int digits = 0;
+	if (numero < 0)
+		digits = 1;
+	while (numero) {
+		numero /= 10;
+		digits++;
+
+	}
+	return digits;
+}
+int load_file_to_memory(const char *filename, char **result) {
+	int32_t tam_arch = 0;
+	FILE *f = fopen(filename, "r");
+	if (f == NULL) {
+		*result = NULL;
+		//		return EXIT_FAILURE; //error apertura
+		return 1;
+	}
+	fseek(f, 0, SEEK_END);
+	tam_arch = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	*result = (char *) malloc(tam_arch + 1);
+	if (tam_arch != fread(*result, sizeof(char), tam_arch, f)) {
+		free(*result);
+		//		return EXIT_FAILURE; //error lectura
+		return 5;
+	}
+	fclose(f);
+	(*result)[tam_arch] = 0;
+	//free(result);
+	return tam_arch;
+}
+
+t_env_var * get_env_var() {
+	t_env_var *env_var = malloc(sizeof(t_env_var));
+	char * aux, *aux2;
+	env_var->pp_ip = getenv("PPIP");
+	if (!env_var->pp_ip) {
+		free(env_var->pp_ip);
+		return NULL;
+	}
+	aux = getenv("PRIO");
+
+	if (!aux) {
+
+		return NULL;
+	}
+	env_var->prioridad = atoi(aux);
+
+	aux2 = getenv("PPPUERTO");
+	if (!aux2) {
+
+		return NULL;
+	}
+	env_var->pp_port = atoi(aux2);
+
+	return env_var;
+
+}
+
+void destroy_env(t_env_var *env){
+
+	free(env);
+
+}
+
+int atenderPedido(char *buff, int32_t fdc) {
+	t_stream *stream = deserealizar_stream(buff);
+	int tipoPedido = stream->packageType;
+	t_file_package * archivo;
+	char *rtaBuff;
+	free(buff);
+	switch (tipoPedido) {
+	case HANDSHAKE:
+		rtaBuff = serializar_ope(stream->data, RTA_HANDSHAKE);
+		send(fdc, rtaBuff, strlen(rtaBuff), 0);
+		free(rtaBuff);
+		free_stream(stream);
+		break;
+	case PROCESO:
+		archivo = package_file_deserializer(stream);
+		puts(archivo->code);
+		//todo free a archivo?
+		rtaBuff = serializar_ope("Finalizo el proceso", FIN_PROCESO);
+		send(fdc, rtaBuff, strlen(rtaBuff), 0);
+		free(rtaBuff);
+		free_stream(stream);
+		break;
+	case REANUDACION:
+		printf("reanudo:   %s\n", stream->data);
+		free_stream(stream);
+		break;
+	case IMPRIMIR_VAR:
+		printf("Se imprime la variable :   %s\n", stream->data);
+		free_stream(stream);
+		break;
+	default:
+		printf("CUALQUIERA");
+		break;
+	}
+	return 0;
+}
+
+double rafaga_estimada;
+double rafaga_real;
+double valor_alfa;
+int16_t puertoHost;
+
+int main(int argc, char **argv) {
+//TODO LISTO PARA QUE LEA DE ENTORNO, CUANDO SE USE, SACAR EL FREE QUE IRIA A LO ULTIMO Y PONER LOS RESULTADOS EN  INICIAR CONEXION
+
+	t_env_var * env_var = get_env_var();
+	if (!env_var) {
+		printf("alguna de las variables de entorno no inicializada\n"); //TODO
+		free(env_var);
+		return EXIT_FAILURE;
+	}
+	printf("La variable de entorno leida del puerto es: %d\n",
+			env_var->pp_port);
+	printf("La variable de entorno leida de la ip es: %s\n", env_var->pp_ip);
+
+	function_logueo("PI", 0, "INFO", "Se inicio el pi");
+
+	uint32_t fd_client = iniciar_conexion(env_var->pp_ip, env_var->pp_port);
+	printf("el file descriptor es :%d\n", fd_client);
+	int8_t finalizado = 0;
+	char * recv, *tosend;
+	char * codigo;
+	uint8_t errorr = 0;
+	t_stream *operacion;
+
+	int16_t prioridad = env_var->prioridad;
+
+	if (load_file_to_memory(argv[1], &codigo)
+			== 1) //todo
+		function_logueo("PI", 0, "INFO", "Errora apertura archivo"); //todo
+	limpiarCodigo(codigo, '\r');
+	//t_file_package * paqArch = create_package_file ( 5000,21,"127.0.0.0", codigo);
+
+	while ((!finalizado) && (!errorr)) {
+		recv = recivirBytes(fd_client, sizeof(char) * 10, &errorr);
+		operacion = deserealizar_stream(recv);
+		printf("recibi resuesta del server \n");
+		char *msj;
+
+		switch (obtener_tipo_paquete(recv)) {
+		case RTA_HANDSHAKE:
+			printf("HandShakeOK:%s\n", operacion->data);
+			int32_t fd_serv = atoi(operacion->data);
+			enviarScript(fd_client, fd_serv, prioridad, codigo);
+			free_stream(operacion);
+			break;
+		case FIN_PROCESO:
+			printf(
+					"El proceso ha finalizado exitosamente ! \nEstado final del proceso\n"); //todo
+			printf("%s", operacion->data);
+			asprintf(&msj, "El proceso ha finalizado exitosamente ! \nEstado final del proceso\n%s", operacion->data);
+			function_logueo("PI", 0, "INFO", msj);
+			free(msj);
+			close(fd_client);
+			finalizado = 1;
+			free_stream(operacion);
+			destroy_env(env_var);
+			break;
+		case SUSPENSION:
+			printf("El proceso fue suspendido\nEstado del proceso\n"); //todo LOG
+			printf("%s", operacion->data);
+			asprintf(&msj, "El proceso fue suspendido\nEstado del proceso\n%s", operacion->data);
+			function_logueo("PI", 0, "INFO", msj);
+			printf("Presione 'y' + intro para reanudar proceso");
+			free(msj);
+			char c = 'n';
+			while (c != 'Y') {
+				c = toupper(getchar());
+			}
+			;
+			tosend = serializar_ope("reanudame", REANUDACION);
+			send(fd_client, tosend, strlen(tosend), 0);
+			function_logueo("PI", 0, "INFO", "Su proceso ha sido reanudado.");
+			free(tosend);
+			free_stream(operacion);
+			break;
+		case DENEGACION_EJEC:
+			printf("El proceso fue denegado para su ejecucion ! \n"); //todo
+			printf("%s", operacion->data);
+			function_logueo("PI", 0, "INFO", "El proceso fue denegado para su ejecucion. Se cerrará la conexion.");
+			close(fd_client);
+			finalizado = 1;
+			free_stream(operacion);
+			break;
+		case EJEC_DEMORADA:
+			printf(
+					"El proceso fue demorado, quizas tarde un poco mas de lo que se planeaba! \n"); //todo
+			printf("%s", operacion->data);
+			function_logueo("PI", 0, "INFO", "El proceso fue demorado, quizas tarde un poco mas de lo que se planeaba.");
+			free_stream(operacion);
+			break;
+		case IMPRIMIR_VAR:
+			printf("El servidor solicita imprimar una variable \n");
+			printf("%s", operacion->data);
+			free_stream(operacion);
+			break;
+
+		default:
+			printf("------cualquiera-----");
+			break;
+
+		}
+
+		printf("recibi paquete %d\n", obtener_tipo_paquete(recv));
+	    free(recv);
+	}
+
+	return 0;
+}
+

@@ -1,0 +1,50 @@
+/*
+ * pcb.h
+ *
+ *  Created on: 02/11/2012
+ *      Author: ignacio-hernan
+ */
+
+#ifndef PCB_H_
+#define PCB_H_
+
+
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "collections/list.h"
+
+typedef struct {
+	int32_t nro_linea;
+	char * linea;
+} t_seg_codigo;
+
+typedef struct {
+	char *variable;
+	int32_t valor;
+} t_seg_datos;
+
+typedef struct {
+	int32_t linea;
+	char *nomb_fun;
+} t_pos_fun;
+
+typedef struct {
+	int32_t linea;
+	char *nomb_etq;
+} t_pos_etq;
+
+
+
+
+
+char* sub_string(const char* str, size_t begin, size_t len);
+
+int load_file_to_memory(const char *filename, char **result);
+
+
+int cargar_pcb(void)
+
+
+
+#endif /* PCB_H_ */

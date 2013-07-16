@@ -1,0 +1,13 @@
+#!/home/utnso/2012-2c-medrano-y-labashe/Procer/pi/Debug/pi
+
+variables a,b
+
+comienzo_programa
+
+a=1
+a=2
+io(10,1)
+a=33
+a=44
+
+fin_programa

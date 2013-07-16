@@ -1,0 +1,21 @@
+variables a,b,c
+comienzo_programa
+a=1
+inicio_for:
+a=a+1
+imprimir a
+b=a-10
+snc b inicio_for
+io(2,0)
+imprimir a
+a=2
+f1()
+fin_programa
+comienzo_funcion f1
+b=a-c;3
+a=c+1;2
+fin_funcion
+comienzo_funcion f2
+blabla
+bleble
+fin_funcion

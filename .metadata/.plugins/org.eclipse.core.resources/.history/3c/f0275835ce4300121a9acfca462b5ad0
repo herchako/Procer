@@ -1,0 +1,34 @@
+#define  _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <commons/pcb.h>
+#include <commons/collections/list.h>
+static t_seg_pila *crear_nodo_pila(int32_t linea, char *funcion);
+
+
+int main (void){
+	char* codigo;
+	t_file_package *paq;
+	t_pcb *pcb=malloc(t_pcb);
+	t_seg_pila * nodp;
+	nodp = crear_nodo_pila(23,"una linea loca");
+	load_file_to_memory("home/utnso/test2.ansisop",&codigo);
+	paq = create_package_file(12,12,codigo);
+	list_add(pcb->seg_pila,nodp);
+	free(codigo);
+	cargar_pcb(paq,pcb);
+
+destruir_pcb(pcb);
+
+return 0;
+
+}
+
+
+
+static t_seg_pila *crear_nodo_pila(int32_t linea, char *funcion) {
+	t_seg_pila *new = malloc(sizeof(t_seg_pila));
+	new->llamada_funcion = strdup(funcion);
+	new->linea = linea;
+	return new;
+}
